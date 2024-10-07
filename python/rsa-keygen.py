@@ -4,6 +4,7 @@
 
 import pickle
 import argparse
+import pem
 
 DEFUALT_E=65537
 
@@ -112,6 +113,18 @@ def eea(x,m):
         return a % m
     raise ValueError("must be coprime")
 
+#def rsa_crt_params(p, q, d):
+#    dP=
+def findInverse(num, mod):
+  listA = [mod,0]; listB = [num,1]
+  factor = listA[0]//listB[0]
+  listC = [listA[0]-(factor)*listB[0],listA[1]-listB[1]*(factor)]
+  while listC[0] > 1:
+    listA = listB; listB = listC
+    factor = listA[0]//listB[0]
+    listC = [listA[0]-(factor)*listB[0],listA[1]-listB[1]*(factor)]
+  return listC[1]
+  
 def rsa_keygen(bits):
   # generate p, q, n, tot(n) ((p-1)(q-1)), e, d
   # p,q are large primes        (SECRET)
@@ -127,10 +140,14 @@ def rsa_keygen(bits):
   tot=t1*t2
   e=DEFUALT_E
   d=eea(e,tot)
+  dP=d%(p-1)
+  dQ=d%(q-1)
+  qInv=findInverse(q,p)
   private=[d,n]
   public=[e,n]
   other=[p,q,tot,e,d,n]
-  return[private,public,other]
+  sign=[dP,dQ,qInv]
+  return[private,public,other,sign]
 
 def writefile(name,data):
     with open(name,'wb') as f:
@@ -145,17 +162,24 @@ def main():
     parser.add_argument('-b','--bits',help="how many bits large the primes are (optional), defualt: 2048 (RSA2048)",required=False,default=2048)
     parser.add_argument('-priv','--privatekey',help='private key output file (optional), defualt: priv.secret',required=False,default='priv.secret')
     parser.add_argument('-pub','--publickey',help='public key output file (optional), defualt: pub.pk',required=False,default='pub.pk')
+    parser.add_argument('--pem',help='.pem/ASN.1 mode',action="store_true")
 
     args=parser.parse_args()
 
     bits=int(args.bits)
-    key=rsa_keygen(bits)
-    privatekey=key[0]
-    publickey=key[1]
-    
-    #write keys to file    
-    writefile(args.privatekey,privatekey)
-    writefile(args.publickey,publickey)
 
+    key=rsa_keygen(bits)
+
+    #Private key
+    writefile(args.privatekey,key[0])
+   
+    #Public key
+    if not(args.pem): 
+        #write keys to file    
+        writefile(args.publickey,key[1])
+    else:
+        args.publickey+='.pem'
+        with open(args.publickey,"wb") as f:
+            f.write(pem.to_pem(key))
 if __name__ == "__main__":
     main()
