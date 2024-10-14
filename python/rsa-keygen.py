@@ -113,8 +113,6 @@ def eea(x,m):
         return a % m
     raise ValueError("must be coprime")
 
-#def rsa_crt_params(p, q, d):
-#    dP=
 def findInverse(num, mod):
   listA = [mod,0]; listB = [num,1]
   factor = listA[0]//listB[0]
@@ -124,7 +122,13 @@ def findInverse(num, mod):
     factor = listA[0]//listB[0]
     listC = [listA[0]-(factor)*listB[0],listA[1]-listB[1]*(factor)]
   return listC[1]
-  
+
+#def findModInverse(num, mod):
+#  for i in range(mod):
+#    if (num*i)%mod==1:
+#      return(i)
+#  raise ValueError("no inverse")
+
 def rsa_keygen(bits):
   # generate p, q, n, tot(n) ((p-1)(q-1)), e, d
   # p,q are large primes        (SECRET)
